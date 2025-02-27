@@ -13,6 +13,8 @@
 #include "flutter/shell/platform/linux/fl_mouse_cursor_handler.h"
 #include "flutter/shell/platform/linux/fl_renderer.h"
 #include "flutter/shell/platform/linux/fl_task_runner.h"
+#include "flutter/shell/platform/linux/fl_text_input_handler.h"
+#include "flutter/shell/platform/linux/fl_windowing_handler.h"
 #include "flutter/shell/platform/linux/public/flutter_linux/fl_dart_project.h"
 #include "flutter/shell/platform/linux/public/flutter_linux/fl_engine.h"
 
@@ -576,14 +578,34 @@ void fl_engine_update_accessibility_features(FlEngine* engine, int32_t flags);
 void fl_engine_request_app_exit(FlEngine* engine);
 
 /**
+ * fl_engine_get_windowing_handler:
+ * @engine: an #FlEngine.
+ *
+ * Gets the windowing handler used by this engine.
+ *
+ * Returns: an #FlWindowingHandler.
+ */
+FlWindowingHandler* fl_engine_get_windowing_handler(FlEngine* engine);
+
+/**
  * fl_engine_get_keyboard_manager:
  * @engine: an #FlEngine.
  *
  * Gets the keyboard manager used by this engine.
  *
- * Returns: a #FlKeyboardManager.
+ * Returns: an #FlKeyboardManager.
  */
 FlKeyboardManager* fl_engine_get_keyboard_manager(FlEngine* engine);
+
+/**
+ * fl_engine_get_text_input_handler:
+ * @engine: an #FlEngine.
+ *
+ * Gets the text input handler used by this engine.
+ *
+ * Returns: an #FlTextInputHandler.
+ */
+FlTextInputHandler* fl_engine_get_text_input_handler(FlEngine* engine);
 
 /**
  * fl_engine_get_mouse_cursor_handler:
@@ -591,7 +613,7 @@ FlKeyboardManager* fl_engine_get_keyboard_manager(FlEngine* engine);
  *
  * Gets the mouse cursor handler used by this engine.
  *
- * Returns: a #FlMouseCursorHandler.
+ * Returns: an #FlMouseCursorHandler.
  */
 FlMouseCursorHandler* fl_engine_get_mouse_cursor_handler(FlEngine* engine);
 

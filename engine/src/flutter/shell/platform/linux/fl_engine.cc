@@ -24,6 +24,7 @@
 #include "flutter/shell/platform/linux/fl_settings_handler.h"
 #include "flutter/shell/platform/linux/fl_texture_gl_private.h"
 #include "flutter/shell/platform/linux/fl_texture_registrar_private.h"
+#include "flutter/shell/platform/linux/fl_windowing_handler.h"
 #include "flutter/shell/platform/linux/public/flutter_linux/fl_plugin_registry.h"
 
 // Unique number associated with platform tasks.
@@ -58,8 +59,14 @@ struct _FlEngine {
   // Implements the flutter/platform channel.
   FlPlatformHandler* platform_handler;
 
+  // Implements the flutter/windowing channel.
+  FlWindowingHandler* windowing_handler;
+
   // Process keyboard events.
   FlKeyboardManager* keyboard_manager;
+
+  // Implements the flutter/textinput channel.
+  FlTextInputHandler* text_input_handler;
 
   // Implements the flutter/keyboard channel.
   FlKeyboardHandler* keyboard_handler;
@@ -391,9 +398,20 @@ static void fl_engine_update_semantics_cb(const FlutterSemanticsUpdate2* update,
 static void setup_keyboard(FlEngine* self) {
   g_clear_object(&self->keyboard_manager);
   self->keyboard_manager = fl_keyboard_manager_new(self);
+
   g_clear_object(&self->keyboard_handler);
   self->keyboard_handler =
       fl_keyboard_handler_new(self->binary_messenger, self->keyboard_manager);
+
+  GtkWidget* widget =
+      self->text_input_handler != nullptr
+          ? fl_text_input_handler_get_widget(self->text_input_handler)
+          : nullptr;
+  g_clear_object(&self->text_input_handler);
+  self->text_input_handler = fl_text_input_handler_new(self->binary_messenger);
+  if (widget != nullptr) {
+    fl_text_input_handler_set_widget(self->text_input_handler, widget);
+  }
 }
 
 // Called right before the engine is restarted.
@@ -473,7 +491,9 @@ static void fl_engine_dispose(GObject* object) {
   g_clear_object(&self->binary_messenger);
   g_clear_object(&self->settings_handler);
   g_clear_object(&self->platform_handler);
+  g_clear_object(&self->windowing_handler);
   g_clear_object(&self->keyboard_manager);
+  g_clear_object(&self->text_input_handler);
   g_clear_object(&self->keyboard_handler);
   g_clear_object(&self->mouse_cursor_handler);
   g_clear_object(&self->task_runner);
@@ -687,6 +707,7 @@ gboolean fl_engine_start(FlEngine* self, GError** error) {
   fl_settings_handler_start(self->settings_handler, settings);
 
   self->platform_handler = fl_platform_handler_new(self->binary_messenger);
+  self->windowing_handler = fl_windowing_handler_new(self);
 
   setup_keyboard(self);
 
@@ -1280,9 +1301,19 @@ void fl_engine_request_app_exit(FlEngine* self) {
   fl_platform_handler_request_app_exit(self->platform_handler);
 }
 
+FlWindowingHandler* fl_engine_get_windowing_handler(FlEngine* self) {
+  g_return_val_if_fail(FL_IS_ENGINE(self), nullptr);
+  return self->windowing_handler;
+}
+
 FlKeyboardManager* fl_engine_get_keyboard_manager(FlEngine* self) {
   g_return_val_if_fail(FL_IS_ENGINE(self), nullptr);
   return self->keyboard_manager;
+}
+
+FlTextInputHandler* fl_engine_get_text_input_handler(FlEngine* self) {
+  g_return_val_if_fail(FL_IS_ENGINE(self), nullptr);
+  return self->text_input_handler;
 }
 
 FlMouseCursorHandler* fl_engine_get_mouse_cursor_handler(FlEngine* self) {

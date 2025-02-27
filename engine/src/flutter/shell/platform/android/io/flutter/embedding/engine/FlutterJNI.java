@@ -1325,6 +1325,28 @@ public class FlutterJNI {
   @SuppressWarnings("unused")
   @SuppressLint("NewApi")
   @UiThread
+  public void showOverlaySurface2() {
+    if (platformViewsController2 == null) {
+      throw new RuntimeException(
+          "platformViewsController must be set before attempting to destroy an overlay surface");
+    }
+    platformViewsController2.showOverlaySurface();
+  }
+
+  @SuppressWarnings("unused")
+  @SuppressLint("NewApi")
+  @UiThread
+  public void hideOverlaySurface2() {
+    if (platformViewsController2 == null) {
+      throw new RuntimeException(
+          "platformViewsController must be set before attempting to destroy an overlay surface");
+    }
+    platformViewsController2.hideOverlaySurface();
+  }
+
+  @SuppressWarnings("unused")
+  @SuppressLint("NewApi")
+  @UiThread
   public void destroyOverlaySurface2() {
     ensureRunningOnMainThread();
     if (platformViewsController2 == null) {
@@ -1615,13 +1637,10 @@ public class FlutterJNI {
     void asyncWaitForVsync(final long cookie);
   }
 
-  /**
-   * Whether Android Hardware Buffer import is known to not work on this particular vendor + API
-   * level and should be disabled.
-   */
-  public boolean ShouldDisableAHB() {
-    return nativeShouldDisableAHB();
+  /** Whether the SurfaceControl swapchain required for hcpp is enabled and active. */
+  public boolean IsSurfaceControlEnabled() {
+    return nativeIsSurfaceControlEnabled(nativeShellHolderId);
   }
 
-  private native boolean nativeShouldDisableAHB();
+  private native boolean nativeIsSurfaceControlEnabled(long nativeShellHolderId);
 }

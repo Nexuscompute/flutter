@@ -104,11 +104,36 @@ final int _kUnblockedUserActions =
 /// A static class to conduct semantics role checks.
 sealed class _DebugSemanticsRoleChecks {
   static FlutterError? _checkSemanticsData(SemanticsNode node) => switch (node.role) {
+    SemanticsRole.alertDialog => _noCheckRequired,
+    SemanticsRole.dialog => _noCheckRequired,
     SemanticsRole.none => _noCheckRequired,
     SemanticsRole.tab => _semanticsTab,
     SemanticsRole.tabBar => _semanticsTabBar,
     SemanticsRole.tabPanel => _noCheckRequired,
+    SemanticsRole.table => _noCheckRequired,
+    SemanticsRole.cell => _semanticsCell,
+    SemanticsRole.columnHeader => _semanticsColumnHeader,
+    // TODO(chunhtai): add checks when the roles are used in framework.
+    // https://github.com/flutter/flutter/issues/159741.
+    SemanticsRole.row => _unimplemented,
+    SemanticsRole.searchBox => _unimplemented,
+    SemanticsRole.dragHandle => _unimplemented,
+    SemanticsRole.spinButton => _unimplemented,
+    SemanticsRole.comboBox => _unimplemented,
+    SemanticsRole.menuBar => _unimplemented,
+    SemanticsRole.menu => _unimplemented,
+    SemanticsRole.menuItem => _unimplemented,
+    SemanticsRole.list => _unimplemented,
+    SemanticsRole.listItem => _unimplemented,
+    SemanticsRole.form => _unimplemented,
+    SemanticsRole.tooltip => _unimplemented,
+    SemanticsRole.loadingSpinner => _unimplemented,
+    SemanticsRole.progressBar => _unimplemented,
+    SemanticsRole.hotKey => _unimplemented,
   }(node);
+
+  static FlutterError? _unimplemented(SemanticsNode node) =>
+      FlutterError('Missing checks for role ${node.getSemanticsData().role}');
 
   static FlutterError? _noCheckRequired(SemanticsNode node) => null;
 
@@ -137,6 +162,20 @@ sealed class _DebugSemanticsRoleChecks {
       return error == null;
     });
     return error;
+  }
+
+  static FlutterError? _semanticsCell(SemanticsNode node) {
+    if (node.parent?.role != SemanticsRole.table) {
+      return FlutterError('A cell must be a child of a table');
+    }
+    return null;
+  }
+
+  static FlutterError? _semanticsColumnHeader(SemanticsNode node) {
+    if (node.parent?.role != SemanticsRole.table) {
+      return FlutterError('A columnHeader must be a child of a table');
+    }
+    return null;
   }
 }
 
@@ -3722,15 +3761,7 @@ class _TraversalSortNode implements Comparable<_TraversalSortNode> {
 class SemanticsOwner extends ChangeNotifier {
   /// Creates a [SemanticsOwner] that manages zero or more [SemanticsNode] objects.
   SemanticsOwner({required this.onSemanticsUpdate}) {
-    // TODO(polina-c): stop duplicating code across disposables
-    // https://github.com/flutter/flutter/issues/137435
-    if (kFlutterMemoryAllocationsEnabled) {
-      FlutterMemoryAllocations.instance.dispatchObjectCreated(
-        library: 'package:flutter/semantics.dart',
-        className: '$SemanticsOwner',
-        object: this,
-      );
-    }
+    assert(debugMaybeDispatchCreated('semantics', 'SemanticsOwner', this));
   }
 
   /// The [onSemanticsUpdate] callback is expected to dispatch [SemanticsUpdate]s
@@ -3752,9 +3783,7 @@ class SemanticsOwner extends ChangeNotifier {
 
   @override
   void dispose() {
-    if (kFlutterMemoryAllocationsEnabled) {
-      FlutterMemoryAllocations.instance.dispatchObjectDisposed(object: this);
-    }
+    assert(debugMaybeDispatchDisposed(this));
     _dirtyNodes.clear();
     _nodes.clear();
     _detachedNodes.clear();
